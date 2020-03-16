@@ -1,5 +1,11 @@
-import scrapy
 import os
+from typing import re
+
+import scrapy
+from yarl import URL
+
+# Define base domain
+url = URL('https://www.sportinglife.com')
 
 # Remove existing racecards.json file
 if os.path.exists("racecards.json"):
@@ -22,12 +28,10 @@ class RaceDetails(scrapy.Item):
     raceLength = scrapy.Field()
     raceRunners = scrapy.Field()
 
-class ExtractSplit():
-    exsplit = "extract().split(", ")"
 
 class RacecardsSpider(scrapy.Spider):
     name = "racecards"
-    allowed_domains = ["sportinglife.com"]
+    allowed_domains = ['www.sportinglife.com']
     start_urls = [
         'https://www.sportinglife.com/racing/racecards',
     ]
@@ -48,8 +52,10 @@ class RacecardsSpider(scrapy.Spider):
                           "Stratford", "Taunton", "Thirsk", "Thurles", "Tipperary", "Towcester", "Tralee", "Tramore",
                           "Uttoxeter", "Warwick", "Wetherby", "Wexford", "Wincanton", "Windsor", "Wolverhampton",
                           "Worcester", "Yarmouth", "York"]
+
         # Begin looping through cards for each Meeting on page
         for card in response.css('section.hr-meeting-container'):
+
             # Check Meeting Title to see if it's a UK/IRE race meet
             current_meeting = card.css('h2.sectionTitleWithProviderLogo a::text').get()
 
@@ -63,14 +69,15 @@ class RacecardsSpider(scrapy.Spider):
                 r["raceSurface"] = card.css('div.hr-meeting-meta-surface span.hr-meeting-meta-value::text').get()
                 r["raceTime"] = card.css('span.hr-meeting-race-time::text').get()
 
-                temp_race_name = r["raceName"] = card.css('div.hr-meeting-race-name-star::text').get()
+                temp_race_name = card.css('div.hr-meeting-race-name-star::text').get()
                 r["raceName"] = temp_race_name
                 if "Handicap" in temp_race_name or "Nursery" in temp_race_name:
                     r["raceHandicap"] = "Handicap"
                 else:
                     r["raceHandicap"] = "Non-Handicap"
 
-                r["raceLink"] = "https://www.sportinglife.com" + card.css('ul.hr-meeting-races-container a::attr(href)').extract_first()
+                r["raceLink"] = 'https://www.sportinglife.com' + card.css(
+                    'ul.hr-meeting-races-container a::attr(href)').extract_first()
                 r["runnersAge"] = card.css('div.hr-meeting-race-name-star span::text')[1].extract().split(",")[0]
 
                 # TO DO: Remove "Yo" text and account for Range of years
