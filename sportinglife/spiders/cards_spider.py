@@ -22,6 +22,8 @@ class RaceDetails(scrapy.Item):
     raceLength = scrapy.Field()
     raceRunners = scrapy.Field()
 
+class ExtractSplit():
+    exsplit = "extract().split(", ")"
 
 class RacecardsSpider(scrapy.Spider):
     name = "racecards"
@@ -31,22 +33,24 @@ class RacecardsSpider(scrapy.Spider):
     ]
 
     def parse(self, response):
+        # Define Valid Meeting names
+        valid_meetings = ["Aintree", "Ascot", "Ayr", "Ballinrobe", "Bangor-On-Dee", "Bath", "Bellewstown",
+                          "Beverley", "Brighton", "Carlisle", "Cartmel", "Catterick", "Chelmsford City", "Cheltenham",
+                          "Chepstow",
+                          "Chester", "Clonmel", "Cork", "Curragh", "Doncaster", "Down Royal", "Downpatrick",
+                          "Dundalk", "Epsom Downs", "Exeter", "Fairyhouse", "Fakenham", "Ffos Las", "Folkestone",
+                          "Fontwell", "Galway", "Goodwood", "Gowran", "Great Leighs", "Hamilton", "Haydock",
+                          "Hereford", "Hexham", "Huntingdon", "Kelso", "Kempton", "Kilbeggan", "Killarney",
+                          "Laytown", "Leicester", "Leopardstown", "Limerick", "Lingfield", "Listowel", "Ludlow",
+                          "Market Rasen", "Musselburgh", "Naas", "Navan", "Newbury", "Newcastle", "Newmarket",
+                          "Newton Abbot", "Nottingham", "Perth", "Plumpton", "Pontefract", "Punchestown", "Redcar",
+                          "Ripon", "Roscommon", "Salisbury", "Sandown", "Sedgefield", "Sligo", "Southwell",
+                          "Stratford", "Taunton", "Thirsk", "Thurles", "Tipperary", "Towcester", "Tralee", "Tramore",
+                          "Uttoxeter", "Warwick", "Wetherby", "Wexford", "Wincanton", "Windsor", "Wolverhampton",
+                          "Worcester", "Yarmouth", "York"]
         # Begin looping through cards for each Meeting on page
         for card in response.css('section.hr-meeting-container'):
             # Check Meeting Title to see if it's a UK/IRE race meet
-            valid_meetings = ["Aintree", "Ascot", "Ayr", "Ballinrobe", "Bangor-On-Dee", "Bath", "Bellewstown",
-                             "Beverley", "Brighton", "Carlisle", "Cartmel", "Catterick", "Chelmsford City", "Cheltenham", "Chepstow",
-                             "Chester", "Clonmel", "Cork", "Curragh", "Doncaster", "Down Royal", "Downpatrick",
-                             "Dundalk", "Epsom Downs", "Exeter", "Fairyhouse", "Fakenham", "Ffos Las", "Folkestone",
-                             "Fontwell", "Galway", "Goodwood", "Gowran", "Great Leighs", "Hamilton", "Haydock",
-                             "Hereford", "Hexham", "Huntingdon", "Kelso", "Kempton", "Kilbeggan", "Killarney",
-                             "Laytown", "Leicester", "Leopardstown", "Limerick", "Lingfield", "Listowel", "Ludlow",
-                             "Market Rasen", "Musselburgh", "Naas", "Navan", "Newbury", "Newcastle", "Newmarket",
-                             "Newton Abbot", "Nottingham", "Perth", "Plumpton", "Pontefract", "Punchestown", "Redcar",
-                             "Ripon", "Roscommon", "Salisbury", "Sandown", "Sedgefield", "Sligo", "Southwell",
-                             "Stratford", "Taunton", "Thirsk", "Thurles", "Tipperary", "Towcester", "Tralee", "Tramore",
-                             "Uttoxeter", "Warwick", "Wetherby", "Wexford", "Wincanton", "Windsor", "Wolverhampton",
-                             "Worcester", "Yarmouth", "York"]
             current_meeting = card.css('h2.sectionTitleWithProviderLogo a::text').get()
 
             # Begin looping through individual races
