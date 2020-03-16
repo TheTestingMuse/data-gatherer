@@ -31,9 +31,9 @@ class RacecardsSpider(scrapy.Spider):
     ]
 
     def parse(self, response):
-        # Identify cards for each Meeting on page
+        # Begin looping through cards for each Meeting on page
         for card in response.css('section.hr-meeting-container'):
-            # Check if it's a UK/IRE race meet
+            # Check Meeting Title to see if it's a UK/IRE race meet
             valid_meetings = ["Aintree", "Ascot", "Ayr", "Ballinrobe", "Bangor-On-Dee", "Bath", "Bellewstown",
                              "Beverley", "Brighton", "Carlisle", "Cartmel", "Catterick", "Chelmsford City", "Cheltenham", "Chepstow",
                              "Chester", "Clonmel", "Cork", "Curragh", "Doncaster", "Down Royal", "Downpatrick",
@@ -49,9 +49,10 @@ class RacecardsSpider(scrapy.Spider):
                              "Worcester", "Yarmouth", "York"]
             current_meeting = card.css('h2.sectionTitleWithProviderLogo a::text').get()
 
+            # Begin looping through individual races
             if any(s in current_meeting for s in valid_meetings):
-                # If Meeting is valid, get Meeting details
 
+                # Get Meeting details
                 r = RaceDetails()
                 r["raceMeeting"] = card.css('h2.sectionTitleWithProviderLogo a::text').get()
                 r["raceGoing"] = card.css('div.hr-meeting-meta span.hr-meeting-meta-value::text').get()
@@ -67,7 +68,8 @@ class RacecardsSpider(scrapy.Spider):
 
                 r["raceLink"] = "https://www.sportinglife.com" + card.css('ul.hr-meeting-races-container a::attr(href)').extract_first()
                 r["runnersAge"] = card.css('div.hr-meeting-race-name-star span::text')[1].extract().split(",")[0]
-                # ADD FUNCTIONALITY TO REMOVE YO AND YEAR RANGES
+
+                # TO DO: Remove "Yo" text and account for Range of years
 
                 # Check if Class data is missing. Mark as Class 0 if so and bump element location
                 temp_race_class = card.css('div.hr-meeting-race-name-star span::text')[1].extract().split(", ")[1]
