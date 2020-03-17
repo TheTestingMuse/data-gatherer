@@ -23,7 +23,8 @@ class RaceDetails(scrapy.Item):
     raceName = scrapy.Field()
     raceHandicap = scrapy.Field()
     raceLink = scrapy.Field()
-    runnersAge = scrapy.Field()
+    runnersMinAge = scrapy.Field()
+    runnersMaxAge = scrapy.Field()
     raceClass = scrapy.Field()
     raceLength = scrapy.Field()
     raceRunners = scrapy.Field()
@@ -84,7 +85,12 @@ class RacecardsSpider(scrapy.Spider):
                 #race_details = race_item.css("div.hr-meeting-race-name-star span::text")[1].extract()
                 ages, *extra, length, runners = re.split(r',\s', race_item.css("div.hr-meeting-race-name-star span::text")[1].extract())
                 # TO DO: Remove "Yo" text and account for Range of years
-                r["runnersAge"] = ages
+                if " to " in ages:
+                    # Split on " to " text
+                    re.split(r'\sto\s', ages)
+                else
+                    # Min age only
+                    r["runnersMinAge"] = ages
                 # Check if Class data is missing. Mark as Class 0 if so and bump element location
                 r["raceClass"] = extra[0][-1] if extra else "0"
                 r["raceLength"] = length
