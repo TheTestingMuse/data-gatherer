@@ -6,8 +6,7 @@ class RacesSpider(scrapy.Spider):
     allowed_domains = ["sportinglife.com"]
     start_urls = []
 
-    racecards_list = open("racecards.json","r")
-    for url in racecards_list:
+    with open("racecards.json","r") as racecards_list:
         start_urls.append(url)
 
     def start_requests(self):
