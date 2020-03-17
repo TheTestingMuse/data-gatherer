@@ -1,4 +1,5 @@
 import os
+import time
 import re
 
 import scrapy
@@ -87,13 +88,17 @@ class RacecardsSpider(scrapy.Spider):
                 # TO DO: Remove "Yo" text and account for Range of years
                 if " to " in ages:
                     # Split on " to " text
-                    re.split(r'\sto\s', ages)
-                else
+                    min_age, max_age = re.split(r'\sto\s', ages)
+
+                    r["runnersMinAge"] = int(min_age.replace("yo", ""))
+                    r["runnersMaxAge"] = int(max_age.replace("yo", ""))
+                else:
                     # Min age only
-                    r["runnersMinAge"] = ages
+                    r["runnersMinAge"] = int(ages.replace("yo+", ""))
+                    r["runnersMaxAge"] = 999
                 # Check if Class data is missing. Mark as Class 0 if so and bump element location
-                r["raceClass"] = extra[0][-1] if extra else "0"
+                r["raceClass"] = int(extra[0][-1]) if extra else 0
                 r["raceLength"] = length
-                r["raceRunners"] = runners.replace(" runners", "")
+                r["raceRunners"] = int(runners.replace(" runners", ""))
 
                 yield r
