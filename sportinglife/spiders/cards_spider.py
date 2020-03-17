@@ -1,7 +1,5 @@
 import os
-import time
 import re
-
 import scrapy
 
 # Remove existing racecards.json file
@@ -83,7 +81,9 @@ class RacecardsSpider(scrapy.Spider):
                 race_link = race_item.css("a::attr(href)").get()
                 r["raceLink"] = ("https://www.sportinglife.com" + race_link)
                 # Split Ages, Classes, Race Length and Runners
-                ages, *extra, race_length, runners = re.split(r',\s', race_item.css("div.hr-meeting-race-name-star span::text")[1].extract())
+                ages, *extra, race_length, runners = re.split(r',\s',
+                                                              race_item.css("div.hr-meeting-race-name-star span::text")[
+                                                                  1].extract())
                 # Check if Ages is > OR ><
                 if " to " in ages:
                     # Split on " to " text
