@@ -27,7 +27,8 @@ class RaceDetails(scrapy.Item):
     runnersMinAge = scrapy.Field()
     runnersMaxAge = scrapy.Field()
     raceClass = scrapy.Field()
-    raceLength = scrapy.Field()
+    raceLengthStr = scrapy.Field()
+    raceLengthConv = scrapy.Field()
     raceRunners = scrapy.Field()
 
 
@@ -81,24 +82,50 @@ class RacecardsSpider(scrapy.Spider):
                 )
                 race_link = race_item.css("a::attr(href)").get()
                 r["raceLink"] = ("https://www.sportinglife.com" + race_link)
-
                 # Split Ages, Classes, Race Length and Runners
-                #race_details = race_item.css("div.hr-meeting-race-name-star span::text")[1].extract()
-                ages, *extra, length, runners = re.split(r',\s', race_item.css("div.hr-meeting-race-name-star span::text")[1].extract())
-                # TO DO: Remove "Yo" text and account for Range of years
+                ages, *extra, race_length, runners = re.split(r',\s', race_item.css("div.hr-meeting-race-name-star span::text")[1].extract())
+                # Check if Ages is > OR ><
                 if " to " in ages:
                     # Split on " to " text
                     min_age, max_age = re.split(r'\sto\s', ages)
-
                     r["runnersMinAge"] = int(min_age.replace("yo", ""))
                     r["runnersMaxAge"] = int(max_age.replace("yo", ""))
                 else:
                     # Min age only
                     r["runnersMinAge"] = int(ages.replace("yo+", ""))
                     r["runnersMaxAge"] = 999
-                # Check if Class data is missing. Mark as Class 0 if so and bump element location
+                # Check if Class data is missing. Mark as Class 0
                 r["raceClass"] = int(extra[0][-1]) if extra else 0
-                r["raceLength"] = length
+                r["raceLengthStr"] = race_length
+                # Convert race lengths - 1m = 8f = 1760y
+                if "m" in race_length and "f" in race_length and "y" in race_length:
+                    miles, furlongs, yards = re.split(r'm\s|f\s', race_length)
+                    conv_miles = int(miles.replace("m", "")) * 1760
+                    conv_furlongs = int(furlongs.replace("f", "")) * 220
+                    conv_yards = int(yards.replace("y", ""))
+                    conv_length = conv_miles + conv_furlongs + conv_yards
+                elif "m" in race_length and "f" in race_length:
+                    miles, furlongs = re.split(r'm\s', race_length)
+                    conv_miles = int(miles.replace("m", "")) * 1760
+                    conv_furlongs = int(furlongs.replace("f", "")) * 220
+                    conv_length = conv_miles + conv_furlongs
+                elif "m" in race_length and "y" in race_length:
+                    miles, yards = re.split(r'm\s', race_length)
+                    conv_miles = int(miles.replace("m", "")) * 1760
+                    conv_yards = int(yards.replace("y", ""))
+                    conv_length = conv_miles + conv_yards
+                elif "m" in race_length:
+                    conv_miles = int(race_length.replace("m", "")) * 1760
+                    conv_length = conv_miles
+                elif "f" in race_length and "y" in race_length:
+                    furlongs, yards = re.split(r'f\s', race_length)
+                    conv_furlongs = int(furlongs.replace("f", "")) * 220
+                    conv_yards = int(yards.replace("y", ""))
+                    conv_length = conv_furlongs + conv_yards
+                else:
+                    furlongs = re.split(r'f\s', race_length)
+                    conv_length = furlongs * 220
+                r["raceLengthConv"] = conv_length
                 r["raceRunners"] = int(runners.replace(" runners", ""))
 
                 yield r
