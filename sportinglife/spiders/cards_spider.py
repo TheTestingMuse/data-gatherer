@@ -1,5 +1,7 @@
 import os
 import re
+import unicodedata
+
 import scrapy
 
 # Remove existing racecards.json file
@@ -34,7 +36,7 @@ class RacecardsSpider(scrapy.Spider):
     name = "racecards"
     allowed_domains = ["sportinglife.com"]
     start_urls = [
-        "https://www.sportinglife.com/racing/racecards",
+        "https://www.sportinglife.com/racing/racecards/2020-01-03",
     ]
 
     def parse(self, response):
@@ -69,33 +71,36 @@ class RacecardsSpider(scrapy.Spider):
                 # Get Meeting details
                 r = RaceDetails()
                 r["raceMeeting"] = current_meeting
-                r["raceGoing"] = going
-                r["raceSurface"] = surface
+                #r["raceGoing"] = going
+                #r["raceSurface"] = surface
 
                 # Get Races details
-                r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get()
-                r["raceName"] = race_item.css("div.hr-meeting-race-name-star::text").get()
+                #r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get()
+                r["raceName"] = race_item.css("span.hr-meeting-race-name::text").get()
                 r["raceHandicap"] = (
                     "Handicap" if is_handicap(r["raceName"]) else "Non-Handicap"
                 )
                 race_link = race_item.css("a::attr(href)").get()
-                r["raceLink"] = ("https://www.sportinglife.com" + race_link)
-                # Split Ages, Classes, Race Length and Runners
-                ages, *extra, race_length, runners = re.split(r',\s',
-                                                              race_item.css("div.hr-meeting-race-name-star span::text")[
-                                                                  1].extract())
-                # Check if Ages is > OR ><
-                if " to " in ages:
-                    # Split on " to " text
-                    min_age, max_age = re.split(r'\sto\s', ages)
-                    r["runnersMinAge"] = int(min_age.replace("yo", ""))
-                    r["runnersMaxAge"] = int(max_age.replace("yo", ""))
-                else:
-                    # Min age only
-                    r["runnersMinAge"] = int(ages.replace("yo+", ""))
-                    r["runnersMaxAge"] = 999
+                #r["raceLink"] = ("https://www.sportinglife.com" + race_link)
+                race_runners = race_item.css("span.hr-meeting-race-runners::text").get()
+                new_race_runners = unicodedata.normalize("NFKD", race_runners)
+                new_race_runners.replace(" ", "")
+                new_race_runners = new_race_runners.replace("Runners,", "")
+                r["raceRunners"] = new_race_runners
+
                 # Check if Class data is missing. Mark as Class 0
-                r["raceClass"] = int(extra[0][-1]) if extra else 0
+                race_class = race_item.css("span.hr-meeting-race-class::text").get()
+                int_race_class = race_class.replace("Class ", "")
+                race_class = int_race_class.replace(",", "")
+                # race_class.replace()
+                race_class.translate({ord(c):None for c in ' \n\t\r'})
+
+                if race_class > 0:
+                    r["raceClass"] = int_race_class
+                else:
+                    r["raceClass"] = 0
+
+                race_length = race_item.css("span.hr-meeting-race-distance::text").get()
                 r["raceLengthStr"] = race_length
                 # Convert race lengths - 1m = 8f = 1760y
                 if "m" in race_length and "f" in race_length and "y" in race_length:
@@ -126,6 +131,5 @@ class RacecardsSpider(scrapy.Spider):
                     furlongs = re.split(r'f\s', race_length)
                     conv_length = furlongs * 220
                 r["raceLengthConv"] = conv_length
-                r["raceRunners"] = int(runners.replace(" runners", ""))
 
                 yield r
