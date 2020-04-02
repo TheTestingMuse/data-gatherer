@@ -73,30 +73,26 @@ class RacecardsSpider(scrapy.Spider):
                 r["raceSurface"] = surface
 
                 # Get Races details
-                r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get()
-                r["raceName"] = race_item.css("span.hr-meeting-race-name::text").get()
+                r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get() # Race Time
+                r["raceName"] = race_item.css("span.hr-meeting-race-name::text").get() # Race Name
+                race_link = race_item.css("a::attr(href)").get()
+                r["raceLink"] = ("https://www.sportinglife.com" + race_link)  # Link to Racecard
                 r["raceHandicap"] = (
                     "Handicap" if is_handicap(r["raceName"]) else "Non-Handicap"
-                )
-                race_link = race_item.css("a::attr(href)").get()
-                r["raceLink"] = ("https://www.sportinglife.com" + race_link)
+                ) # Race Handicap Status
                 race_runners = race_item.css("span.hr-meeting-race-runners::text").get()
                 new_race_runners = race_runners.split(" ")[0]
-                r["raceRunners"] = int(new_race_runners)
-
-                # Check if Class data is missing. Mark as Class 0
+                r["raceRunners"] = int(new_race_runners) # Number of Runners
                 race_class = race_item.css("span.hr-meeting-race-class::text").get()
                 int_race_class = race_class.split(",")[0]
                 race_class = int_race_class.replace("Class ", "")
-                int_race_class = int(race_class)
-
+                int_race_class = int(race_class) # Race Class
                 if int_race_class > 0:
                     r["raceClass"] = int_race_class
                 else:
                     r["raceClass"] = 0
-
                 race_length = race_item.css("span.hr-meeting-race-distance::text").get()
-                r["raceLengthStr"] = race_length
+                r["raceLengthStr"] = race_length # Original String of Race Length
                 # Convert race lengths - 1m = 8f = 1760y
                 if "m" in race_length and "f" in race_length and "y" in race_length:
                     miles, furlongs, yards = re.split(r'm\s|f\s', race_length)
@@ -125,6 +121,6 @@ class RacecardsSpider(scrapy.Spider):
                 else:
                     furlongs = re.split(r'f\s', race_length)
                     conv_length = furlongs * 220
-                r["raceLengthConv"] = conv_length
+                r["raceLengthConv"] = conv_length # Conversion of Race Length for filtering
 
                 yield r
