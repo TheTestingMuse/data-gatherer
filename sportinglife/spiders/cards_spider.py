@@ -1,7 +1,5 @@
 import os
 import re
-import unicodedata
-
 import scrapy
 
 # Remove existing racecards.json file
@@ -71,31 +69,28 @@ class RacecardsSpider(scrapy.Spider):
                 # Get Meeting details
                 r = RaceDetails()
                 r["raceMeeting"] = current_meeting
-                #r["raceGoing"] = going
-                #r["raceSurface"] = surface
+                r["raceGoing"] = going
+                r["raceSurface"] = surface
 
                 # Get Races details
-                #r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get()
+                r["raceTime"] = race_item.css("span.hr-meeting-race-time::text").get()
                 r["raceName"] = race_item.css("span.hr-meeting-race-name::text").get()
                 r["raceHandicap"] = (
                     "Handicap" if is_handicap(r["raceName"]) else "Non-Handicap"
                 )
                 race_link = race_item.css("a::attr(href)").get()
-                #r["raceLink"] = ("https://www.sportinglife.com" + race_link)
+                r["raceLink"] = ("https://www.sportinglife.com" + race_link)
                 race_runners = race_item.css("span.hr-meeting-race-runners::text").get()
-                new_race_runners = unicodedata.normalize("NFKD", race_runners)
-                new_race_runners.replace(" ", "")
-                new_race_runners = new_race_runners.replace("Runners,", "")
-                r["raceRunners"] = new_race_runners
+                new_race_runners = race_runners.split(" ")[0]
+                r["raceRunners"] = int(new_race_runners)
 
                 # Check if Class data is missing. Mark as Class 0
                 race_class = race_item.css("span.hr-meeting-race-class::text").get()
-                int_race_class = race_class.replace("Class ", "")
-                race_class = int_race_class.replace(",", "")
-                # race_class.replace()
-                race_class.translate({ord(c):None for c in ' \n\t\r'})
+                int_race_class = race_class.split(",")[0]
+                race_class = int_race_class.replace("Class ", "")
+                int_race_class = int(race_class)
 
-                if race_class > 0:
+                if int_race_class > 0:
                     r["raceClass"] = int_race_class
                 else:
                     r["raceClass"] = 0
